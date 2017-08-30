@@ -1,0 +1,58 @@
+<link rel="import" href="./bower_components/polymer/polymer.html">
+<link rel="import" href="./polyrex-store.html">
+
+<dom-module id="polyrex-sample">
+  <template>
+    <polyrex-store
+      state="[[initialState]]"
+      mutations="[[mutations]]"
+      actions="[[actions]]"
+    ></polyrex-store>
+
+    <div>
+      <div>Value: [[val]]</div>
+      <input on-input="updateInput" value="[[val]]" />
+    </div>
+  </template>
+  <script>
+    class PolyrexSample extends PolyRex(Polymer.Element) {
+      static get is() { return 'polyrex-sample'; }
+      constructor() {
+        super();
+
+        this.initialState = {
+          hello: 'World',
+          fields: {}
+        };
+        this.mutations = {
+          'UPDATE_INPUT'(state, payload) {
+            state.fields.input = payload.value;
+          },
+          'BUTTON_CLICK'(state, payload) {
+            state.clicked = payload.clicked;
+          }
+        };
+        this.actions = {
+          'BUTTON_CLICK'({ commit }, payload) {
+            commit('BUTTON_CLICK', payload);
+          },
+          'UPDATE_INPUT'({ commit }, payload) {
+            commit('UPDATE_INPUT', payload)
+          }
+        };
+      }
+
+      _computed() {
+        return this.mapState({
+          val: state => state.fields.input
+        });
+      }
+
+      updateInput(e) {
+        this.dispatch('UPDATE_INPUT', { value: e.target.value });
+      }
+    }
+
+    window.customElements.define(PolyrexSample.is, PolyrexSample);
+    </script>
+</dom-module>

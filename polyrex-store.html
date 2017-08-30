@@ -1,0 +1,145 @@
+<link rel="import" href="./bower_components/polymer/polymer.html">
+
+<script src="https://unpkg.com/rxjs@5.4.3/bundles/Rx.min.js"></script>
+
+<dom-module id="polyrex-store">
+  <script>
+    let store;
+    class Store {
+      constructor(options) {
+
+        if (!store) {
+          this.polyRexInit(options);
+        }
+      }
+
+      polyRexInit(options) {
+        this.$store = new Rx.Subject();
+
+        // Bind the actions
+        this._actions = {};
+        this._mutations = {};
+
+        let key = null;
+        for (key in options.actions) {
+          this._actions[key] = options.actions[key].bind(this);
+        }
+        for (key in options.mutations) {
+          this._mutations[key] = options.mutations[key].bind(this);
+        }
+
+        this.state = options.state || {};
+        this.$store.next(this.state);
+
+        // Bind the store to this
+        store = this;
+      }
+
+      commit(type, payload) {
+        if (typeof this._mutations[type] !== 'function') {
+          throw new Error(`Unhandled mutation: ${type}`)
+        }
+        this._mutations[type](this.state, payload);
+
+        const nextState = Object.assign({}, this.state);
+        this.state = nextState;
+        this.$store.next(nextState);
+      }
+
+      dispatch(action, data) {
+        if (typeof this._actions[action] !== 'function') {
+          throw new Error(`Unhandled action: ${action}`)
+        }
+
+        this._actions[action]({ commit: this.commit, rootState: this.state }, data);
+      }
+
+      subscribe(cb) {
+        this.$store.subscribe(cb);
+      }
+
+      mapState(props) {
+        // For each of the props run the cb on it
+        let prop;
+        const newProps = {};
+        for (prop in props) {
+          this[prop] = props[prop](this.state);
+        }
+
+        return this.state;
+      }
+    }
+
+    const PolyRex = Base => class extends Base {
+      connectedCallback() {
+        super.connectedCallback();
+
+        console.log('Calling bind');
+        this._bind();
+      }
+
+      _bind() {
+        this.$store = store.$store;
+        this._actions = store._actions;
+        this._mutations = store._mutations;
+
+        this.commit = store.commit.bind(this);
+        this.dispatch = store.dispatch.bind(this);
+        this.subscribe = store.subscribe.bind(this);
+        this.mapState = store.mapState.bind(this);
+
+        this.subscribe((state) => {
+          this.state = state;
+        });
+
+        this.state = store.state;
+      }
+
+      static get properties() {
+        return {
+          state: {
+            type: Object,
+            computed: '_computed(state)'
+          }
+        };
+      }
+    }
+    window.PolyRex = PolyRex;
+
+    /**
+     * `polyrex-store`
+     * Vuex like bindings for polymer
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class PolyrexStore extends Polymer.Element {
+      static get is() { return 'polyrex-store'; }
+      static get properties() {
+        return {
+          actions: {
+            type: Object
+          },
+          mutations: {
+            type: Object,
+          },
+          state: {
+            type: Object
+          }
+        };
+      }
+      connectedCallback() {
+        super.connectedCallback();
+
+        this.store = new Store({
+          state: this.state,
+          mutations: this.mutations,
+          actions: this.actions
+        });
+      }
+    }
+
+    window.customElements.define(PolyrexStore.is, PolyrexStore);
+  </script>
+</dom-module>
