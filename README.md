@@ -51,8 +51,12 @@ Usage:
         });
       }
 
-      updateInput(e) {
-        this.dispatch('UPDATE_INPUT', { value: e.target.value });
+      connectedCallback() {
+        super.connectedCallback();
+
+        this.mapActions({
+          updateInput: 'UPDATE_INPUT'
+        });
       }
     }
 

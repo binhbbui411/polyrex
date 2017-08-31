@@ -36,8 +36,8 @@
           'BUTTON_CLICK'({ commit }, payload) {
             commit('BUTTON_CLICK', payload);
           },
-          'UPDATE_INPUT'({ commit }, payload) {
-            commit('UPDATE_INPUT', payload)
+          'UPDATE_INPUT'({ commit }, e) {
+            commit('UPDATE_INPUT', { value: e.target.value })
           }
         };
       }
@@ -48,8 +48,12 @@
         });
       }
 
-      updateInput(e) {
-        this.dispatch('UPDATE_INPUT', { value: e.target.value });
+      connectedCallback() {
+        super.connectedCallback();
+
+        this.mapActions({
+          updateInput: 'UPDATE_INPUT'
+        });
       }
     }
 

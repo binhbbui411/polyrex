@@ -68,13 +68,24 @@
 
         return this.state;
       }
+
+      mapActions(props) {
+        // For each of the props add a dispatch with the given
+        // key as its function name
+        let prop;
+        const newProps = {};
+        for (prop in props) {
+          this[prop] = (...args) => {
+            this.dispatch(props[prop], ...args);
+          }
+        }
+      }
     }
 
     const PolyRex = Base => class extends Base {
       connectedCallback() {
         super.connectedCallback();
 
-        console.log('Calling bind');
         this._bind();
       }
 
@@ -87,6 +98,7 @@
         this.dispatch = store.dispatch.bind(this);
         this.subscribe = store.subscribe.bind(this);
         this.mapState = store.mapState.bind(this);
+        this.mapActions = store.mapActions.bind(this);
 
         this.subscribe((state) => {
           this.state = state;
